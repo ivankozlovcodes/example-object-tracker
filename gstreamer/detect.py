@@ -67,6 +67,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
     box_x, box_y, box_w, box_h = inference_box
     scale_x, scale_y = src_w / box_w, src_h / box_h
 
+    obj_trajectories.set_cross_segment(src_w, src_h)
     for y, line in enumerate(text_lines, start=1):
         shadow_text(dwg, 10, y*20, line)
     if trackerFlag and (np.array(trdata)).size:

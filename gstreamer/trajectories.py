@@ -1,7 +1,7 @@
 import csv
 import hashlib
 from collections import namedtuple, defaultdict
-from .geometry import segments_intersection
+from geometry import segments_intersection
 
 DetectedObject = namedtuple('DetectedObject', 'id label x y w h cx cy score')
 
@@ -25,7 +25,7 @@ class ObjTrajectories:
 
   def update_obj_traj_dict(self, label, x, y, w, h, track_id, score):
     cx, cy = x + w / 2, y + h / 2
-    detectedObject = DetectedObject(label, x, y, w, h, cx, cy, score)
+    detectedObject = DetectedObject(track_id, label, x, y, w, h, cx, cy, score)
     self.objs_dict[track_id].append(detectedObject)
     self._detect_if_object_has_crossed(track_id)
 
@@ -64,7 +64,7 @@ class ObjTrajectories:
     segments = []
     for p in points:
       if prev_point_coords is not None:
-        segments.append(prev_point_coords, (p.cx, p.cy))
+        segments.append((prev_point_coords, (p.cx, p.cy)))
       prev_point_coords = (p.cx, p.cy)
     return segments
 
