@@ -3,7 +3,7 @@ import hashlib
 from collections import namedtuple, defaultdict
 from geometry import segments_intersection, point_to_segment_orientation
 
-DetectedObject = namedtuple('DetectedObject', 'id label x y w h cx cy score')
+DetectedObject = namedtuple('DetectedObject', 'id label x y w h cx cy score frame')
 
 def id_to_random_color(number):
   numByte = str.encode(str(number))
@@ -17,6 +17,10 @@ class ObjTrajectories:
     self._cross_clockwise_counter = 0
     self._cross_counter_clockwise_counter = 0
     self.cross_segment = None
+    self._frame_number = 0
+
+  def increment_frame_number(self):
+    self._frame_number += 1
 
   def set_cross_segment(self, src_w, src_h):
     self.cross_segment = (
@@ -26,7 +30,7 @@ class ObjTrajectories:
 
   def update_obj_traj_dict(self, label, x, y, w, h, track_id, score):
     cx, cy = x + w / 2, y + h / 2
-    detectedObject = DetectedObject(track_id, label, x, y, w, h, cx, cy, score)
+    detectedObject = DetectedObject(track_id, label, x, y, w, h, cx, cy, score, self._frame_number)
     self.objs_dict[track_id].append(detectedObject)
     self._detect_if_object_has_crossed(track_id)
 
@@ -51,7 +55,7 @@ class ObjTrajectories:
   def _detect_if_object_has_crossed(self, track_id):
     if self.cross_segment is None:
       return
-    points = self.objs_dict[track_id]
+    points = self.get_point_with_recall(track_id, frame_recall=5)
     segments = ObjTrajectories.build_segments_from_points(points)
     if len(segments) < 1:
       return
@@ -63,6 +67,12 @@ class ObjTrajectories:
         self._cross_clockwise_counter += 1
       else:
         self._cross_counter_clockwise_counter += 1
+
+  def get_point_with_recall(self, track_id, frame_recall):
+    def recall_filter(point):
+      return self._frame_number - frame_recall <= point.frame
+    points = filter(recall_filter, self.objs_dict[track_id])
+    return points
 
   def build_segments_from_points(points):
     prev_point_coords = None
@@ -76,7 +86,8 @@ class ObjTrajectories:
   def update_swg_drawing(self, drawing):
     for track_id, obj in self.objs_dict.items():
       color = 'rgb({},{},{})'.format(*id_to_random_color(track_id))
-      segments = ObjTrajectories.build_segments_from_points(obj)
+      points = self.get_point_with_recall(track_id, frame_recall=5)
+      segments = ObjTrajectories.build_segments_from_points(points)
       for s in segments:
         p1, p2 = s
         if s is segments[0]:

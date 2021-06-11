@@ -67,7 +67,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
     box_x, box_y, box_w, box_h = inference_box
     scale_x, scale_y = src_w / box_w, src_h / box_h
 
-    obj_trajectories.set_cross_segment(src_w, src_h)
+    obj_trajectories.increment_frame_number()
     for y, line in enumerate(text_lines, start=1):
         shadow_text(dwg, 10, y*20, line)
     if trackerFlag and (np.array(trdata)).size:
@@ -212,6 +212,10 @@ def main():
         if len(objs) != 0:
             return generate_svg(src_size, inference_size, inference_box, objs, labels, text_lines, trdata, trackerFlag)
 
+    def user_callback_on_exit():
+        obj_trajectories.save_csv('/tmp/traj.csv')
+
+    obj_trajectories.set_cross_segment(640, 480)
     result = gstreamer.run_pipeline(user_callback,
                                     src_size=(640, 480),
                                     appsink_size=inference_size,
