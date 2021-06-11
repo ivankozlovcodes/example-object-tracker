@@ -1,7 +1,7 @@
 import csv
 import hashlib
 from collections import namedtuple, defaultdict
-from geometry import segments_intersection
+from geometry import segments_intersection, point_to_segment_orientation
 
 DetectedObject = namedtuple('DetectedObject', 'id label x y w h cx cy score')
 
@@ -14,7 +14,8 @@ def id_to_random_color(number):
 class ObjTrajectories:
   def __init__(self) -> None:
     self.objs_dict = defaultdict(lambda: [])
-    self._cross_counter = 0
+    self._cross_clockwise_counter = 0
+    self._cross_counter_clockwise_counter = 0
     self.cross_segment = None
 
   def set_cross_segment(self, src_w, src_h):
@@ -57,7 +58,11 @@ class ObjTrajectories:
     last_segment = segments[-1]
     intersection = segments_intersection(last_segment, self.cross_segment)
     if intersection is not None:
-      self._cross_counter += 1
+      is_clockwise_intersection = point_to_segment_orientation(self.cross_segment, last_segment[1])
+      if is_clockwise_intersection:
+        self._cross_clockwise_counter += 1
+      else:
+        self._cross_counter_clockwise_counter += 1
 
   def build_segments_from_points(points):
     prev_point_coords = None
@@ -78,5 +83,6 @@ class ObjTrajectories:
           drawing.add(drawing.circle(center=p1, r=10, fill=color))
         drawing.add(drawing.line(start=p1, end=p2, stroke=color, stroke_width='3'))
         drawing.add(drawing.circle(center=p2, r=10, fill=color))
-    drawing.add(drawing.text('Counter {}'.format(self._cross_counter), insert=(10, 10), fill='black', font_size=20))
+    counter_message = 'Clockwise {}. Counterclockwise {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter)
+    drawing.add(drawing.text(counter_message, insert=(10, 10), fill='white', font_size=20))
     self.save_csv('/tmp/traj.csv')

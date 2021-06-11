@@ -21,3 +21,10 @@ def segments_intersection(section1, section2):
   line1 = get_line_parameters(p1, p2)
   line2 = get_line_parameters(q1, q2)
   return intersection(line1, line2)
+
+def point_to_segment_orientation(segment, point):
+    """Returns True if `point` is clockwise oriented in regards of `segment`"""
+    xp, yp = point
+    ((x0, y0), (x1, y1)) = segment
+    cross_product = (x1 - xp) * (y0 - yp) * (x0 - xp) * (y1 - yp)
+    return cross_product > 0
