@@ -118,7 +118,6 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
             dwg.add(dwg.rect(insert=(x, y), size=(w, h),
                              fill='none', stroke='red', stroke_width='2'))
     obj_trajectories.update_swg_drawing(dwg)
-    obj_trajectories.save_csv('/tmp/traj.csv')
     return dwg.tostring()
 
 
@@ -221,7 +220,8 @@ def main():
                                     appsink_size=inference_size,
                                     trackerName=args.tracker,
                                     videosrc=args.videosrc,
-                                    videofmt=args.videofmt)
+                                    videofmt=args.videofmt,
+                                    user_function_on_exit=user_callback_on_exit)
 
 
 if __name__ == '__main__':

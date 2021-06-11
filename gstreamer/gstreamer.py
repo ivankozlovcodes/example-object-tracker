@@ -27,8 +27,9 @@ GObject.threads_init()
 Gst.init(None)
 
 class GstPipeline:
-    def __init__(self, pipeline, user_function, src_size, mot_tracker):
+    def __init__(self, pipeline, user_function, src_size, mot_tracker, user_function_on_exit=None):
         self.user_function = user_function
+        self.user_function_on_exit = user_function_on_exit
         self.running = False
         self.gstbuffer = None
         self.sink_size = None
@@ -75,6 +76,8 @@ class GstPipeline:
     def on_bus_message(self, bus, message):
         t = message.type
         if t == Gst.MessageType.EOS:
+            if self.user_function_on_exit is not None:
+                self.user_function_on_exit()
             Gtk.main_quit()
         elif t == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
@@ -82,6 +85,8 @@ class GstPipeline:
         elif t == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             sys.stderr.write('Error: %s: %s\n' % (err, debug))
+            if self.user_function_on_exit is not None:
+                self.user_function_on_exit()
             Gtk.main_quit()
         return True
 
@@ -207,7 +212,8 @@ def run_pipeline(user_function,
                  appsink_size,
                  trackerName,
                  videosrc='/dev/video1',
-                 videofmt='raw'):
+                 videofmt='raw',
+                 user_function_on_exit=None):
     objectOfTracker = None
     if videofmt == 'h264':
         SRC_CAPS = 'video/x-h264,width={width},height={height},framerate=30/1'
@@ -270,5 +276,5 @@ def run_pipeline(user_function,
 
     print('Gstreamer pipeline:\n', pipeline)
 
-    pipeline = GstPipeline(pipeline, user_function, src_size, mot_tracker)
+    pipeline = GstPipeline(pipeline, user_function, src_size, mot_tracker, user_function_on_exit)
     pipeline.run()

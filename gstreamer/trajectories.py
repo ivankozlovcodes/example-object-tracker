@@ -96,4 +96,3 @@ class ObjTrajectories:
         drawing.add(drawing.circle(center=p2, r=10, fill=color))
     counter_message = 'Clockwise {}. Counterclockwise {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter)
     drawing.add(drawing.text(counter_message, insert=(10, 10), fill='white', font_size=20))
-    self.save_csv('/tmp/traj.csv')
