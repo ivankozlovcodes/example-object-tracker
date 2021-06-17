@@ -1,9 +1,10 @@
 import csv
+import time
 import hashlib
 from collections import namedtuple, defaultdict
 from geometry import segments_intersection, point_to_segment_orientation
 
-DetectedObject = namedtuple('DetectedObject', 'id label x y w h cx cy score frame')
+DetectedObject = namedtuple('DetectedObject', 'id label x y w h cx cy score frame timestamp')
 
 def id_to_random_color(number):
   numByte = str.encode(str(number))
@@ -17,10 +18,15 @@ class ObjTrajectories:
     self._cross_clockwise_counter = 0
     self._cross_counter_clockwise_counter = 0
     self.cross_segment = None
+    self.start_time = None
     self._frame_number = 0
 
   def increment_frame_number(self):
     self._frame_number += 1
+
+  def set_start_time(self):
+    if self.start_time is None:
+      self.start_time = time.monotonic()
 
   def set_cross_segment(self, src_w, src_h):
     self.cross_segment = (
@@ -30,7 +36,8 @@ class ObjTrajectories:
 
   def update_obj_traj_dict(self, label, x, y, w, h, track_id, score):
     cx, cy = x + w / 2, y + h / 2
-    detectedObject = DetectedObject(track_id, label, x, y, w, h, cx, cy, score, self._frame_number)
+    timestamp = time.monotonic() - self.start_time
+    detectedObject = DetectedObject(track_id, label, x, y, w, h, cx, cy, score, self._frame_number, timestamp)
     self.objs_dict[track_id].append(detectedObject)
     self._detect_if_object_has_crossed(track_id)
 
@@ -96,3 +103,9 @@ class ObjTrajectories:
         drawing.add(drawing.circle(center=p2, r=10, fill=color))
     counter_message = 'Clockwise {}. Counterclockwise {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter)
     drawing.add(drawing.text(counter_message, insert=(10, 10), fill='white', font_size=20))
+
+  def print_debug_info(self):
+    print('Total object detected {}'.format(len(self.objs_dict.keys())))
+    print('Total clockwise clock {}. Counterclockwise {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter))
+
+ObjTrajectoriesSingletone = ObjTrajectories()
