@@ -31,8 +31,8 @@ class ObjTrajectories:
 
   def set_cross_segment(self, src_w, src_h):
     self.cross_segment = (
-      (src_w / 2, 0),
-      (src_w / 2, src_h)
+      (src_w / 3, 0),
+      (src_w / 3, src_h),
     )
 
   def update_obj_traj_dict(self, label, x, y, w, h, track_id, score):
