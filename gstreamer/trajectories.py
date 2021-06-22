@@ -73,6 +73,7 @@ class ObjTrajectories:
         row['w'] = float(row['w'])
         row['h'] = float(row['h'])
         row['cx'] = float(row['cx'])
+        row['cy'] = float(row['cy'])
         row['score'] = float(row['score'])
         row['timestamp'] = float(row['timestamp'])
         detectedObject = DetectedObject(**row)
@@ -80,7 +81,7 @@ class ObjTrajectories:
     if debug:
       self.print_debug_info()
 
-  def get_trajectories_svg(self, drawing, start_time=0, end_time=None, track_ids=None, draw_last_rectangle=True):
+  def get_trajectories_svg(self, drawing, start_time=0, end_time=None, track_ids=None, draw_last_rectangle=True, count_cross=True):
     if track_ids is not None:
       objects = { key: value for key, value in self.objs_dict.items() if key in track_ids}
     else:
@@ -100,6 +101,7 @@ class ObjTrajectories:
           boxes_filtered_by_frame_step.append(box)
       objects[track_id] = boxes_filtered_by_frame_step
     objects = { key: value for key, value in objects.items() if len(value) > 0 }
+    clockwise_total, counter_clockwise_total = 0, 0
     for track_id, points in objects.items():
       color = 'rgb({},{},{})'.format(*id_to_random_color(track_id))
       self._update_swg_drawing_from_points(drawing, points, color)
@@ -107,6 +109,15 @@ class ObjTrajectories:
         p = points[-1]
         drawing.add(drawing.rect(insert=(p.x, p.y), size=(p.w, p.h),
           fill='none', stroke=color, stroke_width='2'))
+      if count_cross:
+        clockwise, counter_clockwise = self._count_crosses_from_points(points)
+        clockwise_total += clockwise
+        counter_clockwise_total += counter_clockwise
+    if count_cross:
+      drawing.add(drawing.line(start=self.cross_segment[0], end=self.cross_segment[1], stroke='black', stroke_width='5'))
+      counter_message = 'Clockwise {}. Counterclockwise {}'.format(clockwise_total, counter_clockwise_total)
+      print(counter_message)
+      drawing.add(drawing.text(counter_message, insert=(20, 20), fill='white', font_size=20))
 
   def _detect_if_object_has_crossed(self, track_id):
     if self.cross_segment is None:
@@ -123,6 +134,22 @@ class ObjTrajectories:
         self._cross_clockwise_counter += 1
       else:
         self._cross_counter_clockwise_counter += 1
+
+  def _count_crosses_from_points(self, points):
+    if self.cross_segment is None:
+      return (0, 0)
+    segments = ObjTrajectories.build_segments_from_points(points)
+    if len(segments) < 1:
+      return (0, 0)
+    clockwise = 0
+    counter_clockwise = 0
+    for segment in segments:
+      intersection = segments_intersection(self.cross_segment, segment)
+      if intersection is not None:
+        is_clockwise_intersection = point_to_segment_orientation(self.cross_segment, segment[1])
+        clockwise += is_clockwise_intersection
+        counter_clockwise += not is_clockwise_intersection
+    return (clockwise, counter_clockwise)
 
   def get_point_with_recall(self, track_id, frame_recall):
     def recall_filter(point):
@@ -144,6 +171,8 @@ class ObjTrajectories:
       color = 'rgb({},{},{})'.format(*id_to_random_color(track_id))
       points = self.get_point_with_recall(track_id, frame_recall=5)
       self._update_swg_drawing_from_points(drawing, points, color)
+      counter_message = 'Clockwise {}. Counterclockwise {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter)
+      drawing.add(drawing.text(counter_message, insert=(10, 10), fill='white', font_size=20))
 
   def _update_swg_drawing_from_points(self, drawing, points, color):
     segments = ObjTrajectories.build_segments_from_points(points)
@@ -153,8 +182,6 @@ class ObjTrajectories:
         drawing.add(drawing.circle(center=p1, r=3, fill=color))
       drawing.add(drawing.line(start=p1, end=p2, stroke=color, stroke_width='3'))
       drawing.add(drawing.circle(center=p2, r=3, fill=color))
-    counter_message = 'Clockwise {}. Counterclockwise {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter)
-    drawing.add(drawing.text(counter_message, insert=(10, 10), fill='white', font_size=20))
 
   def print_debug_info(self):
     print('Total object detected {}'.format(len(self.objs_dict.keys())))
