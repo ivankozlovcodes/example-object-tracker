@@ -26,5 +26,5 @@ def point_to_segment_orientation(segment, point):
     """Returns True if `point` is clockwise oriented in regards of `segment`"""
     xp, yp = point
     ((x0, y0), (x1, y1)) = segment
-    cross_product = (x1 - xp) * (y0 - yp) * (x0 - xp) * (y1 - yp)
+    cross_product = (x1 - xp) * (y0 - yp) - (x0 - xp) * (y1 - yp)
     return cross_product > 0
