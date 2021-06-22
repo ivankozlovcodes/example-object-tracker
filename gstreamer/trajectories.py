@@ -114,10 +114,16 @@ class ObjTrajectories:
         clockwise_total += clockwise
         counter_clockwise_total += counter_clockwise
     if count_cross:
-      drawing.add(drawing.line(start=self.cross_segment[0], end=self.cross_segment[1], stroke='black', stroke_width='5'))
       counter_message = 'Clockwise {}. Counterclockwise {}'.format(clockwise_total, counter_clockwise_total)
-      print(counter_message)
-      drawing.add(drawing.text(counter_message, insert=(20, 20), fill='white', font_size=20))
+      ads = drawing.add(drawing.text(counter_message, insert=(20, 20), fill='white', font_size=18, style='font-weight:bold;background-color="black"'))
+      self._draw_cross_segment(drawing)
+
+  def _draw_cross_segment(self, dwg):
+    marker = dwg.marker(insert=(3, 3), size=(6,6))
+    dwg.defs.add(marker)
+    line = dwg.add(dwg.line(start=self.cross_segment[0], end=self.cross_segment[1], stroke='black', stroke_width='3'))
+    marker.add(dwg.circle((3, 3), r=2, fill='red'))
+    line.set_markers((marker, None, None))
 
   def _detect_if_object_has_crossed(self, track_id):
     if self.cross_segment is None:
