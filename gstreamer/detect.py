@@ -42,11 +42,10 @@ import re
 import svgwrite
 import time
 from tracker import ObjectTracker
-from trajectories import ObjTrajectories
+from trajectories import ObjTrajectoriesSingletone
 
 
 Object = collections.namedtuple('Object', ['id', 'score', 'bbox'])
-obj_trajectories = ObjTrajectories()
 
 def load_labels(path):
     p = re.compile(r'\s*(\d+)(.+)')
@@ -67,7 +66,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
     box_x, box_y, box_w, box_h = inference_box
     scale_x, scale_y = src_w / box_w, src_h / box_h
 
-    obj_trajectories.set_cross_segment(src_w, src_h)
+    ObjTrajectoriesSingletone.increment_frame_number()
     for y, line in enumerate(text_lines, start=1):
         shadow_text(dwg, 10, y*20, line)
     if trackerFlag and (np.array(trdata)).size:
@@ -99,7 +98,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
             shadow_text(dwg, x, y - 5, label)
             dwg.add(dwg.rect(insert=(x, y), size=(w, h),
                              fill='none', stroke='red', stroke_width='2'))
-            obj_trajectories.update_obj_traj_dict(label_name, x, y, w, h, int(trackID), obj.score)
+            ObjTrajectoriesSingletone.update_obj_traj_dict(label_name, x, y, w, h, int(trackID), obj.score)
     else:
         for obj in objs:
             x0, y0, x1, y1 = list(obj.bbox)
@@ -117,8 +116,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
             shadow_text(dwg, x, y - 5, label)
             dwg.add(dwg.rect(insert=(x, y), size=(w, h),
                              fill='none', stroke='red', stroke_width='2'))
-    obj_trajectories.update_swg_drawing(dwg)
-    obj_trajectories.save_csv('/tmp/traj.csv')
+    ObjTrajectoriesSingletone.update_swg_drawing(dwg)
     return dwg.tostring()
 
 
@@ -212,12 +210,19 @@ def main():
         if len(objs) != 0:
             return generate_svg(src_size, inference_size, inference_box, objs, labels, text_lines, trdata, trackerFlag)
 
+    def user_callback_on_exit():
+        csv_filename = os.path.splitext(args.videosrc)[0] + '.csv'
+        ObjTrajectoriesSingletone.save_csv(csv_filename)
+        ObjTrajectoriesSingletone.print_debug_info()
+
+    ObjTrajectoriesSingletone.set_cross_segment(640, 480)
     result = gstreamer.run_pipeline(user_callback,
                                     src_size=(640, 480),
                                     appsink_size=inference_size,
                                     trackerName=args.tracker,
                                     videosrc=args.videosrc,
-                                    videofmt=args.videofmt)
+                                    videofmt=args.videofmt,
+                                    user_function_on_exit=user_callback_on_exit)
 
 
 if __name__ == '__main__':
