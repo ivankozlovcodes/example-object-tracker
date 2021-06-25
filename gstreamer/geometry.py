@@ -1,3 +1,5 @@
+EPS = 2e-8
+
 def get_line_parameters(p1, p2):
     A = p1[1] - p2[1]
     B = p2[0] - p1[0]
@@ -18,7 +20,11 @@ def get_line_intersection(line1, line2):
 def point_belong_to_segment(segment, point):
   ((x1, y1), (x2, y2)) = segment
   x3, y3 = point
-  return (min(x1, x2) <= x3 <= max(x1, x2)) and (min(y1, y2) <= y3 <= max(y1, y2))
+  min_x = min(x1, x2)
+  max_x = max(x1, x2)
+  min_y = min(y1, y2)
+  max_y = max(y1, y2)
+  return (min(x1, x2) - EPS <= x3 <= max(x1, x2) + EPS) and (min(y1, y2) - EPS <= y3 <= max(y1, y2) + EPS)
 
 def segments_intersection(segment1, segment2):
   p1, p2 = segment1
