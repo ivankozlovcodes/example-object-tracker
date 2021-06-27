@@ -42,8 +42,7 @@ import re
 import svgwrite
 import time
 from tracker import ObjectTracker
-from trajectories import ObjTrajectoriesSingletone
-
+from tracking.trajectories import ObjTrajectoriesSingletone
 
 Object = collections.namedtuple('Object', ['id', 'score', 'bbox'])
 
