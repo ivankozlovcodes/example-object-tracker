@@ -23,7 +23,7 @@ gi.require_version('GstBase', '1.0')
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, GObject, Gst, GstBase, Gtk
 
-from trajectories import ObjTrajectoriesSingletone
+from tracking.collector import CollectorSingletone
 
 GObject.threads_init()
 Gst.init(None)
@@ -94,7 +94,7 @@ class GstPipeline:
 
     def on_new_sample(self, sink):
         sample = sink.emit('pull-sample')
-        ObjTrajectoriesSingletone.set_start_time()
+        CollectorSingletone.start()
         if not self.sink_size:
             s = sample.get_caps().get_structure(0)
             self.sink_size = (s.get_value('width'), s.get_value('height'))

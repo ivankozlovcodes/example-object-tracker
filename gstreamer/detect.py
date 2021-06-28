@@ -42,7 +42,7 @@ import re
 import svgwrite
 import time
 from tracker import ObjectTracker
-from tracking.trajectories import ObjTrajectoriesSingletone
+from tracking.collector import CollectorSingletone
 
 Object = collections.namedtuple('Object', ['id', 'score', 'bbox'])
 
@@ -65,7 +65,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
     box_x, box_y, box_w, box_h = inference_box
     scale_x, scale_y = src_w / box_w, src_h / box_h
 
-    ObjTrajectoriesSingletone.increment_frame_number()
+    collector.increment_frame_number()
     for y, line in enumerate(text_lines, start=1):
         shadow_text(dwg, 10, y*20, line)
     if trackerFlag and (np.array(trdata)).size:
@@ -97,7 +97,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
             shadow_text(dwg, x, y - 5, label)
             dwg.add(dwg.rect(insert=(x, y), size=(w, h),
                              fill='none', stroke='red', stroke_width='2'))
-            ObjTrajectoriesSingletone.update_obj_traj_dict(label_name, x, y, w, h, int(trackID), obj.score)
+            collector.add_point(label_name, x, y, w, h, int(trackID), obj.score)
     else:
         for obj in objs:
             x0, y0, x1, y1 = list(obj.bbox)
@@ -115,7 +115,6 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
             shadow_text(dwg, x, y - 5, label)
             dwg.add(dwg.rect(insert=(x, y), size=(w, h),
                              fill='none', stroke='red', stroke_width='2'))
-    ObjTrajectoriesSingletone.update_swg_drawing(dwg)
     return dwg.tostring()
 
 
@@ -211,10 +210,8 @@ def main():
 
     def user_callback_on_exit():
         csv_filename = os.path.splitext(args.videosrc)[0] + '.csv'
-        ObjTrajectoriesSingletone.save_csv(csv_filename)
-        ObjTrajectoriesSingletone.print_debug_info()
+        collector.dump(csv_filename)
 
-    ObjTrajectoriesSingletone.set_cross_segment(640, 480)
     result = gstreamer.run_pipeline(user_callback,
                                     src_size=(640, 480),
                                     appsink_size=inference_size,

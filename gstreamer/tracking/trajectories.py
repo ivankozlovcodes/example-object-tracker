@@ -5,44 +5,11 @@ from tracking.trajectory import Trajectory, filter_by_timestamp, filter_by_frame
 from tracking.detected_object import DetectedObject
 
 class ObjTrajectories:
-  def __init__(self) -> None:
+  def __init__(self, cross_segment) -> None:
     self.trajectories = {}
     self._cross_clockwise_counter = 0
     self._cross_counter_clockwise_counter = 0
-    self.start_time = None
-    self._frame_number = 0
-
-    self.cross_segment = None
-
-  def increment_frame_number(self):
-    self._frame_number += 1
-
-  def set_start_time(self):
-    if self.start_time is None:
-      self.start_time = time.monotonic()
-
-  def set_cross_segment(self, p1, p2):
-    self.cross_segment = (p1, p2)
-
-  def update_obj_traj_dict(self, label, x, y, w, h, track_id, score):
-    timestamp = time.monotonic() - self.start_time
-    detectedObject = DetectedObject(track_id, label, x, y, w, h, score, self._frame_number, timestamp)
-    if track_id not in self.trajectories:
-      self.trajectories = Trajectory(track_id)
-    self.trajectories[track_id].add_object(detectedObject)
-    if self.cross_segment:
-      clockwise, counter_clockwise =\
-        self.trajectories[track_id].detect_if_last_segment_crossed(self.cross_segment)
-      self._cross_clockwise_counter += clockwise
-      self._cross_counter_clockwise_counter += counter_clockwise
-
-  def save_csv(self, filename):
-    with open(filename, 'w') as csvfile:
-      writer = csv.DictWriter(csvfile, fieldnames=DetectedObject._fields)
-      writer.writeheader()
-      for traj in self.trajectories.values():
-        for point in traj.points:
-          writer.writerow(point._asdict())
+    self.cross_segment = cross_segment
 
   def load_csv(self, filename, debug=False, fieldnames=None):
     self.trajectories = {}
@@ -106,16 +73,6 @@ class ObjTrajectories:
       counter_clockwise_total += counter_clockwise
     return (clockwise_total, counter_clockwise_total)
 
-  def update_swg_drawing(self, drawing):
-    for track_id, traj in self.trajectories.items():
-      segments = traj.get_segments([filter_by_frame_recall(5)])
-      if len(segments) == 0:
-        continue
-      color = traj.color
-      self._update_swg_drawing_from_segments(drawing, points, color)
-      self._update_swg_drawimg_cross_segment(drawing)
-      self._update_svg_drawing_cross_info(drawing, (self._cross_clockwise_counter, self._cross_clockwise_counter))
-
   def _update_swg_drawimg_cross_segment(self, dwg):
     marker = dwg.marker(insert=(3, 3), size=(6,6))
     dwg.defs.add(marker)
@@ -143,5 +100,3 @@ class ObjTrajectories:
     print('Total in: {}. Out: {}'.format(self._cross_clockwise_counter, self._cross_counter_clockwise_counter))
     people_detected = len(({ track_id: 1 for track_id, traj in self.trajectories.items() if traj.average_label == 'person' }).keys())
     print(f'{people_detected} people detected')
-
-ObjTrajectoriesSingletone = ObjTrajectories()
