@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from geometry import segments_intersection, point_to_segment_orientation
 
+PERSON_DETECTION_THRESHOLD = 0.3
+
 def filter_by_frame_recall(frame_recall):
   def recall_filter(point):
     return self._frame_number - frame_recall <= point.frame
@@ -46,6 +48,9 @@ class Trajectory:
     labels_dict = defaultdict(lambda: 0)
     for point in self.points:
       labels_dict[point.label] += point.score
+    peson_fraction = labels_dict['person'] / sum(labels_dict.values())
+    if peson_fraction >= PERSON_DETECTION_THRESHOLD:
+      return 'person'
     dominant_label = max(labels_dict, key=labels_dict.get)
     return dominant_label
 
