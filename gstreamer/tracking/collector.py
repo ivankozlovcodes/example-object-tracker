@@ -22,7 +22,7 @@ class Collector:
   def add_point(self, label, x, y , w, h, track_id, score):
     timestamp = timestamp = time.monotonic() - self._start_time
     detectedObject = DetectedObject(track_id, label, x, y, w, h, score, self._frame_number, timestamp)
-    self.points.append(detectedObject._asdict(), ignore_index=True)
+    self.points = self.points.append(detectedObject._asdict(), ignore_index=True)
 
   def dump(self, filename):
     self.points.to_csv(filename)
