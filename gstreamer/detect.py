@@ -65,7 +65,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
     box_x, box_y, box_w, box_h = inference_box
     scale_x, scale_y = src_w / box_w, src_h / box_h
 
-    collector.increment_frame_number()
+    CollectorSingletone.increment_frame_number()
     for y, line in enumerate(text_lines, start=1):
         shadow_text(dwg, 10, y*20, line)
     if trackerFlag and (np.array(trdata)).size:
@@ -97,7 +97,7 @@ def generate_svg(src_size, inference_size, inference_box, objs, labels, text_lin
             shadow_text(dwg, x, y - 5, label)
             dwg.add(dwg.rect(insert=(x, y), size=(w, h),
                              fill='none', stroke='red', stroke_width='2'))
-            collector.add_point(label_name, x, y, w, h, int(trackID), obj.score)
+            CollectorSingletone.add_point(label_name, x, y, w, h, int(trackID), obj.score)
     else:
         for obj in objs:
             x0, y0, x1, y1 = list(obj.bbox)
@@ -210,7 +210,7 @@ def main():
 
     def user_callback_on_exit():
         csv_filename = os.path.splitext(args.videosrc)[0] + '.csv'
-        collector.dump(csv_filename)
+        CollectorSingletone.dump(csv_filename)
 
     result = gstreamer.run_pipeline(user_callback,
                                     src_size=(640, 480),
