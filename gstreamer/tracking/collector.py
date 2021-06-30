@@ -1,5 +1,5 @@
+import csv
 import time
-import pandas as pd
 
 from tracking.detected_object import DetectedObject
 
@@ -11,7 +11,7 @@ class Collector:
     self._frame_number += 1
 
   def reset(self):
-    self.points = pd.DataFrame(columns=DetectedObject._fields)
+    self.points = []
     self._frame_number = 0
     self._start_time = None
 
@@ -21,10 +21,15 @@ class Collector:
 
   def add_point(self, label, x, y , w, h, track_id, score):
     timestamp = timestamp = time.monotonic() - self._start_time
-    detectedObject = DetectedObject(track_id, label, x, y, w, h, score, self._frame_number, timestamp)
-    self.points = self.points.append(detectedObject._asdict(), ignore_index=True)
+    self.points.append(
+      DetectedObject(track_id, label, x, y, w, h, score, self._frame_number, timestamp)
+    )
 
   def dump(self, filename):
-    self.points.to_csv(filename)
+    with open(filename, 'w') as csvfile:
+      writer = csv.DictWriter(csvfile, fieldnames=DetectedObject._fields)
+      writer.writeheader()
+      for point in self.points:
+        writer.writerow(point._asdict())
 
 CollectorSingletone = Collector()
