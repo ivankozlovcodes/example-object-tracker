@@ -43,7 +43,7 @@ class ObjTrajectories:
     for track_id, traj in trajectories.items():
       segments = traj.get_segments([
         filter_by_timestamp(start_time, end_time),
-        filter_by_frame_step(FRAME_STEP)
+        # filter_by_frame_step(FRAME_STEP)
       ])
       if len(segments) == 0:
         continue
