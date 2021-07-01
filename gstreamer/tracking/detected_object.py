@@ -22,6 +22,8 @@ class DetectedObject(DetectedObjectTuple):
     d['score'] = float(d['score'])
     d['timestamp'] = float(d['timestamp'])
     # todo: remove
-    del d['cx']
-    del d['cy']
+    if 'cx' in d:
+      del d['cx']
+    if 'cy' in d:
+      del d['cy']
     return DetectedObject(**d)
