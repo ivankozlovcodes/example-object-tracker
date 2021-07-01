@@ -10,7 +10,10 @@
 			"request": "launch",
 			"program": "${file}",
 			"console": "integratedTerminal",
-			"cwd": "${workspaceFolder}/gstreamer"
+			"cwd": "${workspaceFolder}/gstreamer",
+			"env": {
+				"PYTHONPATH": "${workspaceFolder}/gstreamer"
+			}
 		}
 	]
 }
