@@ -209,8 +209,9 @@ def main():
             return generate_svg(src_size, inference_size, inference_box, objs, labels, text_lines, trdata, trackerFlag)
 
     def user_callback_on_exit():
-        csv_filename = os.path.splitext(args.videosrc)[0] + '.csv'
-        CollectorSingletone.dump(csv_filename)
+        # todo: remove hardcoded value; get from args
+        csv_filpath = f'/home/mendel/csv/{os.path.basename(args.videosrc)}'
+        CollectorSingletone.dump(csv_filpath)
 
     result = gstreamer.run_pipeline(user_callback,
                                     src_size=(640, 480),
